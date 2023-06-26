@@ -1,0 +1,135 @@
+*checksyntax.txt*   checksyntax -- Check files for syntax errors (r, javascript, php, ruby, tex ...)
+                    Author: Tom Link, micathom at gmail com
+
+The checksyntax plugin runs an external syntax checker for the current buffer 
+whenever the buffer is saved (by calling the |:CheckSyntax| command). Syntax 
+errors are managed as location or quickfix lists. If any syntax error occurs, 
+the |location-list| is opened (users can redefine |CheckSyntaxFail()| to change 
+this behaviour). You can use any |location-list| related command to navigate 
+the list of syntax errors.
+
+Most syntax checks can be run asynchronously (from Vim 8 onwards or, for 
+Vim 7, if the AsyncCommand plugin is installed).
+
+
+Invocation~
+
+Manual invocation:
+By default, |:CheckSyntax| is mapped to <F5> (if not mapped already), and 
+automatically executed when saving the buffer. If multiple syntax checkers are 
+defined for the given filetype, this will by default invoke the preferred (see 
+|g:checksyntax#preferred|) or first good (i.e. installed) syntax checker for a 
+given filetype.
+
+:CheckSyntax! (with the optional <bang>) or <C-F5> will run all supported 
+syntax checkers for a given filetype if multiple syntax checkers are defined 
+for a given filetype and if the software is installed on your computer.
+
+Automatic invocation:
+In order to automatically run a syntax check when saving a file, please set 
+|g:checksyntax#auto_filetypes| or |g:checksyntax#auto_enable_rx| to an 
+appropriate value. If |g:checksyntax#auto_enable_rx| is set to '.', which 
+matches all filetypes, automatic syntax checks are enabled for all supported 
+filetypes. Automatic checks are equivalent to running |:CheckSyntax| with no 
+<bang>.
+
+
+Supported filetypes~
+
+The syntax checks are performed by external syntax checker. This software has 
+to be installed on your computer. Pre-defined syntax checkers are:
+
+  bash         ... shellcheck, bash -n
+  c, cpp       ... splint
+  haskell      ... hlint, ghc-mod-check
+  html         ... tidy
+  java         ... jlint, checkstyle, pmd
+  javascript   ... jshint, esprima, gjslint, jslint, jsl, pmd
+  lua          ... luac (run luac -p)
+  perl         ... perl (run perl -Wc)
+  php          ... php (run php -l)
+  python       ... pyflakes or pylint
+  r            ... lintr
+  ruby         ... ruby (run ruby -c)
+  tex, latex   ... chktex (run chktex -q -v0)
+  typescript   ... tsc
+  viki         ... deplate
+  vim          ... vint
+  xhtml        ... tidy
+  xml, docbk   ... xmllint, pmd
+
+Checkers with support for many filetypes:
+
+  coala        ... c, cpp, csharp, cmake, coffeescript, css, dart, fortran, go, 
+                   haskell, html, java, javascript, jsp, tex, lua, markdown, 
+                   perl, php, python, r, rst, ruby, scala, scss, sh, sql, 
+                   swift, typescript, verilog, vhdl, vim, xml, yaml and maybe 
+                   others
+
+Syntax checker definitions are kept in:
+autoload/checksyntax/defs/{&filetype}.vim
+
+Run this command to find out, which filetypes are supported: >
+
+  :echo globpath(&rtp, 'autoload/checksyntax/defs/*.vim')
+
+
+Trouble shooting~
+
+It's possible that a newer version of a linter changes its command-line 
+arguments or the output format in a way that breaks the checksyntax plugin. 
+Since I personally use only a small subset of the provided checkers, it's 
+likely that I won't notice the problem. If the checksyntax plugin doesn't seem 
+to work, please proceed as follows:
+
+1. Check if the errorformat is correctly defined. Look at either:
+    - `autoload/checksyntax/defs/LINTER.vim` or
+    - `compiler/checksyntax/LINTER.vim`.
+   If the linter is defined as a compiler, you can try to invoke the compiler 
+   manually: >
+     compiler checksyntax/LINTER
+     lmake
+
+2. Use `:let g:checksyntax#debug = 2` to get a high level view of what is going 
+   on when you invoke |:CheckSyntax|.
+
+3. Install the tlib plugin (vimscript #1863 or 
+   https://github.com/tomtom/tlib_vim) and try: >
+     :Tlibtraceset --file=checksyntax.log +checksyntax
+<   Invoke |:CheckSyntax| and send me the resulting log file per e-mail. You 
+   can use `:CheckSyntax FILETYPE LINTER` to invoke a specific syntax checker.
+
+
+-----------------------------------------------------------------------
+Install~
+
+Edit the vba file and type: >
+
+    :so %%
+
+See :help vimball for details. If you have difficulties or use vim 7.0, 
+please make sure, you have the current version of vimball (vimscript 
+#1502) installed or update your runtime.
+
+Also available via git: http://github.com/tomtom/checksyntax_vim/
+
+
+Optional enhancements~
+
+If the quickfixsigns plugin (vimscript #2584) is installed, lines containing 
+syntax errors will be marked with signs.
+
+The tinykeymap plugin (vimscript #4199) can be used to quickly move from one 
+issue to the next by using it's quickfix or location-list maps (see 
+|g:tinykeymap#map#qfl#map| and |g:tinykeymap#map#loc#map|).
+
+For vim8+: Checks will be run asynchronously by default.
+
+For vim7: If AsyncCommand (vimscript #3431) is installed, syntax checks can 
+be peformed asynchronously -- see also |g:checksyntax#run_alternatives|, 
+|g:checksyntax#run_all_alternatives| and |g:checksyntax#async_runner|. This 
+requires a version of vim with |clientserver| support and |v:servername| to be 
+set (for vim see also |--servername|).
+
+
+%s
